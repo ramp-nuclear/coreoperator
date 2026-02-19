@@ -1,0 +1,4 @@
+dependencies:
+  - hypothesis
+  - pytest
+  - pandas

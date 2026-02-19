@@ -1,0 +1,6 @@
+dependencies:
+  - packaging
+  - more-itertools
+  - multipledispatch
+  - numpy
+  - pip

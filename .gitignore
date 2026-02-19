@@ -1,0 +1,7 @@
+.hypothesis
+.idea
+build
+docs/build
+docs/source/_static
+*.egg-info
+__pycache__
