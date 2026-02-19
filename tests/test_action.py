@@ -35,7 +35,7 @@ _directions = 'NWSE'
 directions = st.sampled_from(_directions)
 positions = st.tuples(sites, directions)
 repeat_lists = st.lists(positions, min_size=2).filter(_repeat_site)
-_preLoadChain = partial(LoadChain, lambda: XX)
+_preLoadChain = partial(LoadChain, lambda: 15)
 _factories = [CyclicShuffle, _preLoadChain]
 factories = st.sampled_from(_factories)
 

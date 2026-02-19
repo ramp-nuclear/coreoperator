@@ -22,7 +22,7 @@ from coreoperator.history.action_group import ActionGroup
 
 @pytest.fixture(scope='module')
 def _example_state() -> OperationalState:
-    simple_rod = ExcludeFrame(frame_dimensions=(11., 11., XXX.),
+    simple_rod = ExcludeFrame(frame_dimensions=(11., 11., 150.),
                               picture_dimensions=(8., 8., 70.),
                               frame_name=PurePath('baz'),
                               picture_name=PurePath('moo'),
@@ -33,10 +33,10 @@ def _example_state() -> OperationalState:
     grid = CartesianGrid((0., 0., 0.),
                          (5, 5),
                          (10., 10.),
-                         XXX.,
+                         150.,
                          make_light_water(40.),
                          rod_contents={'A2': simple_rod})
-    coretree = ExcludeFrame(frame_dimensions=(50., 50., XXX.),
+    coretree = ExcludeFrame(frame_dimensions=(50., 50., 150.),
                             picture_dimensions=(10., 10., 100.),
                             frame_name=PurePath('foo'),
                             picture_name=PurePath('bar'),
