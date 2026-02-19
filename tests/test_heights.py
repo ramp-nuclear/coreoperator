@@ -82,7 +82,7 @@ def test_translation_absolute_has_absolute_h(_example_state: OperationalState,
                                              h: float, alias: str):
     s2 = _example_state.new_control_height(alias, h)
     z = s2.core.transform_of(s2.core.aliases[alias][1][0])
-    assert isclose(float(z.translation[-1]), h, rel_tol=1e-10, abs_tol=1e-4)
+    assert isclose(z.translation[-1].item(), h, rel_tol=1e-10, abs_tol=1e-4)
 
 
 @given(dh=height_shifts, alias=aliases)
@@ -96,7 +96,7 @@ def test_translation_of_sub_does_not_move_anything_else(_example_state: Operatio
         if path not in change_paths:
             assert t == zs[path]
     for path in change_paths:
-        assert isclose(new_zs[path].translation[-1], zs[path].translation[-1] + dh,
+        assert isclose(new_zs[path].translation[-1].item(), zs[path].translation[-1].item() + dh,
                        rel_tol=1e-10, abs_tol=1e-4)
 
 
@@ -112,5 +112,5 @@ def test_translation_of_top_does_move_bottom_the_same_way(
           for path, _ in _example_state.core.nodes}
     s2 = _example_state.shift_control_height(alias, dh)
     new_zs = {path: s2.core.transform_of(path) for path, _ in s2.core.nodes}
-    assert isclose(new_zs[sub].translation[-1], zs[sub].translation[-1] + dh,
+    assert isclose(new_zs[sub].translation[-1].item(), zs[sub].translation[-1].item() + dh,
                    rel_tol=1e-10, abs_tol=1e-4)

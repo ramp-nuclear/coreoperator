@@ -113,7 +113,7 @@ class OperationalState:
         new_history = deepcopy(self.history)
         for path in new_core.aliases[alias][1]:
             current_transform = new_core.transform_of(path)
-            z_shift = float(height - current_transform.translation[-1])
+            z_shift = height - current_transform.translation[-1].item()
             shift = Transform((0., 0., z_shift))
             new_core[path].transform = shift @ new_core[path].transform
         new_history.append({alias: height})
