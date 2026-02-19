@@ -1,20 +1,28 @@
-from typing import Sequence
+from typing import Sequence, TypeVar
 
 from coremaker.core import Site
 
-from coreoperator.mobilization.grid_action import _ensure_unique
+from coreoperator.mobilization.grid_action import (
+        _ensure_unique, GridAction, SiteDict, set_rods
+        )
 
 
-class Remove:
+class Remove(GridAction):
     """remove rod from grid"""
 
+    ser_identifier = "RodRemove"
+    
     def __init__(self, sites: Sequence[Site]):
         _ensure_unique(sites)
         self.sites = sites
 
-    def __eq__(self, other: "Remove"):
-        return (type(self) == type(other)
-                and self.__getstate__() == other.__getstate__())
+    def apply(self, d: SiteDict) -> None:
+        set_rods(d, {site: None for site in self.sites})
+
+    def __eq__(self: Self, other: Self):
+        if not isinstance(other, type(self)):
+            return NotImplemented
+        return self.__getstate__() == other.__getstate__()
 
     def __hash__(self):
         return hash(self.__getstate__())

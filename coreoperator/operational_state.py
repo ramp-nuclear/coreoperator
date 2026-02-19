@@ -1,7 +1,11 @@
 from copy import deepcopy
 from datetime import timedelta
 from pathlib import PurePath
-from typing import Optional, Callable
+from typing import Optional, Callable, TypeVar, Any, Type
+try:
+    from typing import Self
+except ImportError:
+    Self = TypeVar("Self")
 
 import numpy as np
 from coremaker.amounts import parse_amounts
@@ -12,62 +16,121 @@ from coremaker.protocols.mixture import Mixture
 from coremaker.protocols.node import NodeLike
 from coremaker.transform import Transform
 from isotopes import Isotope, H, O, ZAID
-from packaging.version import Version
+from ramp_core.serializable import Serializable, deserialize_default
 
-from coreoperator.history.history import History
+from coreoperator.history import History, StateParams
 from coreoperator.mobilization import Scheme
-from coreoperator.mobilization.apply import apply_mobilization
-from typing import Sequence
 
 days = float
-MW = float
+MW = MWD = float
 degC = float
 kg = float
 Filter = Callable[[PurePath, NodeLike], bool]
 
 
-def _mostly_water(_, node: NodeLike) -> bool:
-    """Returns true if the component is mostly made out of hydrogen and oxygen
-    atoms.
+def _mostly_water(_, node: NodeLike, fraction: float = 0.5) -> bool:
+    """Returns true if the water's atom fraction in the material is bigger 
+    than some threshold.
+
     """
     if not node.mixture:
         return False
     mixture = node.mixture
-    total = sum(mixture.values())
+    total = sum(mixture.isotopes.values())
     ho = {H.Z, O.Z}
     ho_total = sum(value for iso, value in mixture.items() if iso.Z in ho)
-    return ho <= {x.Z for x in mixture.keys()} and ho_total > total / 2
+    return ho <= {x.Z for x in mixture.keys()} and ho_total > fraction * total
 
 
-class OperationalState:
+class OperationalState(Serializable):
+    """This class represents a loosely defined reactor's core state.
     """
-    this class represents a loosely defined reactor's core state.
-    """
 
-    def __init__(self, *, design_name: str, history: History,
-                 release: Version, core: Core):
-        self.design_name = design_name
-        self.history = history
-        self.release = release
+    ser_identifier = "State"
+    __core: Core
+
+    def __init__(self, *, 
+                 params: StateParams,
+                 history: History | None = None,
+                 tags: set[str],
+                 core: Core):
+        self.params = params
+        self.history = history or History()
+        self.tags = tags
         self.core = core
 
-    def copy(self, **kw) -> "OperationalState":
+    def serialize(self) -> tuple[str, dict[str, Any]]:
+        return self.ser_identifier, {"params": self.params.serialize(),
+                                     "history": self.history.serialize(),
+                                     "tags": list(self.tags),
+                                     "core": self._core.serialize(),
+                                     }
+
+    @classmethod
+    def deserialize(cls: Type[Self], d: dict[str, Any], *, supported: dict[str, Type[Serializable]]) -> Self:
+        params = deserialize_default(d["params"], supported=supported, default=StateParams)
+        history = deserialize_default(d["history"], supported=supported, default=History)
+        tags = set(d["tags"])
+        core = deserialize_default(d["core"], supported=supported)
+        return cls(params=params, history=history, tags=tags, core=core)
+
+    @property
+    def core(self) -> Core:
+        """Returns a copy of the saved core, because we want people to not
+        edit the core directly. 
+
+        This ensures that something like FeatherState can have the same API,
+        because any changes to the core has to follow the pattern:
+        .. code-block:: python
+            core = state.core
+            ...
+            state.core = core
+
+        We can still do faster operations by calling self._core, but outside
+        users who should not know of these implementation details don't know
+        that they can do that, and will likely not shoot themselves in the foot
+        by assuming different APIs for OperationalState and FeatherState.
+
+        """
+        return deepcopy(self._core)
+
+    @core.setter
+    def core(self, core: Core):
+        self.__core = core
+
+    @property
+    def _core(self) -> Core:
+        """Gets the core in the fastest way possible, but read-only.
+
+        One should not expect that changing this object would affect the original
+        state, even if it does under some temporary implementation.
+
+        """
+        return self.__core
+
+    def as_dict(self, skip: frozenset[str] = frozenset()) -> dict:
+        """Returns the data stores in this object as a dict.
+
+        This dict can then be used to recreate the object using 
+        `state = OperationalState(**d)`.
+
+        """
+        attrs = dict(params="params", history="history", tags="tags", core="_core")
+        return {key: getattr(self, attr) for key, attr in attrs.items() 
+                if key not in skip}
+
+    def copy(self, **kw) -> Self:
         """Return a copy of current operational state with modifications
         """
-        kwargs = dict(design_name=self.design_name, history=self.history,
-                      release=self.release, core=self.core)
-        kwargs.update(kw)
+        kwargs = self.as_dict(skip=frozenset(kw.keys())) | kw
         return type(self)(**kwargs)
 
     @property
-    def power_nuc(self):
-        return self.history.current_params['power']
+    def power_nuc(self) -> MW:
+        """Return the nuclear power of the core at its operational state"""
+        return self.params.power
 
-    def new_core(self) -> Core:
-        """Return another core object identical to current core"""
-        return deepcopy(self.core)
-
-    def shift_control_height(self, alias: str, height_shift: float) -> "OperationalState":
+    def shift_control_height(self: Self, alias: str, height_shift: float) -> Self:
         """Change the height of the aliased control elements by a given number
 
         Parameters
@@ -82,19 +145,17 @@ class OperationalState:
         OperationalState
             new OperationalState with the control height changed
         """
-        new_core = self.new_core()
-        new_history = deepcopy(self.history)
+        new_core = self.core
         for path in new_core.aliases[alias][1]:
             shift = Transform(translation=np.array([0, 0, height_shift]))
             new_core[path].transform = shift @ new_core[path].transform
         try:
-            current_history_height = self.history.current_params[alias]
+            current_history_height = self.params[alias]
         except KeyError:
             current_history_height = 0
-        new_history.append({alias: height_shift + current_history_height})
-        return self.copy(core=new_core, history=new_history)
+        return self.copy(core=new_core, params=self.params.copy(**{alias: height_shift + current_history_height}))
 
-    def new_control_height(self, alias: str, height: float) -> "OperationalState":
+    def new_control_height(self: Self, alias: str, height: float) -> Self:
         """Change the height of the aliased control elements to a given number
 
         Parameters
@@ -109,17 +170,15 @@ class OperationalState:
         OperationalState
             new OperationalState with the control height changed
         """
-        new_core = self.new_core()
-        new_history = deepcopy(self.history)
+        new_core = self.core
         for path in new_core.aliases[alias][1]:
             current_transform = new_core.transform_of(path)
-            z_shift = height - current_transform.translation[-1].item()
+            z_shift = height - current_transform.translation.item(-1)
             shift = Transform((0., 0., z_shift))
             new_core[path].transform = shift @ new_core[path].transform
-        new_history.append({alias: height})
-        return self.copy(core=new_core, history=new_history)
+        return self.copy(core=new_core, params=self.params.copy(**{alias: height}))
 
-    def new_mixture(self, alias: str, mixture: Mixture) -> "OperationalState":
+    def new_mixture(self: Self, alias: str, mixture: Mixture) -> Self:
         """Change the mixture in an alias.
 
         Some control systems are based on changing the materials in some components
@@ -132,7 +191,7 @@ class OperationalState:
         alias: str
             Alias to change.
         mixture: Mixture
-            Mixture to put in the alias paths.
+            The mixture to put in the alias paths.
 
         Returns
         -------
@@ -140,22 +199,18 @@ class OperationalState:
             A new state, with the changed mixture.
 
         """
-        new_core = self.new_core()
+        new_core = self.core
         for path in new_core.aliases[alias][1]:
             new_core[path].mixture = mixture
+        return self.copy(core=new_core)
 
-        new_history = deepcopy(self.history)
-        new_history.append({alias: tuple(mixture.isotopes.items())})
-
-        return self.copy(history=new_history, core=new_core)
-
-    def new_temperature(self, temperature: degC,
+    def new_temperature(self: Self, 
+                        temperature: degC,
                         *,
                         to_change: Optional[Filter] = None,
                         change_water_density: bool = True,
-                        history_name: str = 'temperature',
                         iswater: Filter = _mostly_water,
-                        water_density_strategy: Callable[[float], float] = _H2O) -> "OperationalState":
+                        water_density_strategy: Callable[[float], float] = _H2O) -> Self:
         """Creates a changed state with all mixtures at a new temperature.
         A changed state where the temperature of all components is set
         to this static value.
@@ -170,9 +225,7 @@ class OperationalState:
         to_change: Optional[Filter]
             Filter for the nodes whose mixtures to change
         change_water_density: bool
-            Flag for whether water densities should change or not.
-        history_name: str
-            name given for this state update in the history record
+            Flag for whether water densities should change.
         iswater: Optional[Filter]
             Filter to figure out what components are made out of water.
             Used so water density can change with its temperature.
@@ -182,12 +235,11 @@ class OperationalState:
         Returns
         -------
         OperationalState
-         A new state with its temperature changed.
+            A new state with its temperature changed.
 
         """
 
-        new_core = self.new_core()
-        new_history = deepcopy(self.history)
+        new_core = self.core
         _to_change = (lambda x: to_change(*x)) if to_change else None
         for path, node in filter(_to_change, new_core.nodes):
             if node.mixture:
@@ -198,70 +250,53 @@ class OperationalState:
                 node.mixture = ConcreteMixture(
                     {iso: nd * factor for iso, nd in mixture.items()},
                     temperature, mixture.sab)
-        new_history.append({history_name: temperature})
-        return self.copy(core=new_core, history=new_history)
+        return self.copy(core=new_core)
 
-    def new_water_temperature(self,
+    def new_water_temperature(self: Self,
                               temperature: degC, *,
-                              history_name: str = 'water_temperature',
                               iswater: Filter = _mostly_water,
-                              water_density_strategy: Callable[[float], float] = _H2O) -> "OperationalState":
+                              water_density_strategy: Callable[[float], float] = _H2O) -> Self:
         """Create a changed state where the water temperature is changed.
 
         A changed state where the temperature of all water components is set
         to this static value.
 
-        If a change in water density is desired, that is also applied by default,
-        but can be turned off with a flag.
-
         Parameters
         ----------
         temperature: degC
-         Temperature for all things to be at.
-        history_name: str
-         name given for this state update in the history record
+            Temperature for all things to be at.
         iswater: Filter
-         The filter to figure out what components are made out of water.
-         Used so water density can change with its temperature.
+            The filter to figure out what components are made out of water.
         water_density_strategy: Callable[[float], float]
             Function used to calculate the water density given temperature.
 
         Returns
         -------
         OperationalState
-         A new state with the temperature of the water components changed.
+            A new state with the temperature of the water components changed.
 
         """
-        new_core = self.new_core()
-        new_history = deepcopy(self.history)
-        for _, node in new_core.nodes:
-            if iswater(_, node):
-                mixture = node.mixture
-                factor = water_density_strategy(temperature) / water_density_strategy(mixture.temperature)
-                node.mixture = ConcreteMixture(
-                    {iso: nd * factor for iso, nd in mixture.items()},
-                    temperature, mixture.sab)
-        new_history.append({history_name: temperature})
-        return self.copy(core=new_core, history=new_history)
+        return self.new_temperature(temperature=temperature,
+                                    to_change=iswater,
+                                    iswater=iswater,
+                                    water_density_strategy=water_density_strategy
+                                    )
 
-    def new_water_density_factor(self, factor: float,
-                                 history_name: str = 'water_density_factor',
+    def new_water_density_factor(self: Self, 
+                                 factor: float,
                                  iswater: Filter = _mostly_water
-                                 ) -> "OperationalState":
+                                 ) -> Self:
         """Give a new state with the density of water changed by a factor.
 
         Parameters
         ----------
         factor: float
-         Factor of density to multiply water mixtures by.
-        history_name: str
-         Name to put in history for this change.
+            Factor of density to multiply water mixtures by.
         iswater: Filter
-         The Filter to figure out what components are made out of water.
+            The Filter to figure out what components are made out of water.
 
         """
-        new_core = self.new_core()
-        new_history = deepcopy(self.history)
+        new_core = self.core
 
         for _, node in new_core.nodes:
             if iswater(_, node):
@@ -269,15 +304,15 @@ class OperationalState:
                 node.mixture = ConcreteMixture(
                     {iso: nd * factor for iso, nd in mixture.items()},
                     mixture.temperature, mixture.sab)
+        return self.copy(core=new_core)
 
-        new_history.append({history_name: factor})
-        return self.copy(core=new_core, history=new_history)
-
-    def new_isotope_density(self, densities: dict[ZAID, float],
+    def new_isotope_density(self: Self, 
+                            densities: dict[ZAID, float],
                             to_change: Filter | None = None
-                            ) -> "OperationalState":
+                            ) -> Self:
         """Give a new state where the density changes.
-        Change the density of an isotopes, used for example for boron updates in PWR cores.
+        Change the density of an isotopes, used for example for boron updates 
+        in PWR cores.
 
         Parameters
         ----------
@@ -292,8 +327,7 @@ class OperationalState:
         OperationalState
          The state after the change
         """
-        new_core = self.new_core()
-        new_history = deepcopy(self.history)
+        new_core = self.core
         _to_change = (lambda x: to_change(*x)) if to_change else None
         for _, node in filter(_to_change, new_core.nodes):
             if node.mixture:
@@ -301,10 +335,9 @@ class OperationalState:
                 old = mixture.isotopes
                 node.mixture = ConcreteMixture(old | densities,
                                                mixture.temperature, mixture.sab)
-        new_history.append(densities)
-        return self.copy(history=new_history, core=new_core)
+        return self.copy(core=new_core)
 
-    def new_power(self, power: MW) -> "OperationalState":
+    def new_power(self: Self, power: MW) -> Self:
         """
         method to change the power of the core
 
@@ -318,12 +351,9 @@ class OperationalState:
         OperationalState
          The new state with the new power.
         """
-        new_core = self.new_core()
-        new_history = deepcopy(self.history)
-        new_history.append(dict(power=power))
-        return self.copy(core=new_core, history=new_history)
+        return self.copy(core=self.core, params=self.params.copy(power=power))
 
-    def new_after_scheme(self, scheme: Scheme) -> "OperationalState":
+    def new_after_scheme(self: Self, scheme: Scheme) -> Self:
         """
         Apply a mobilization scheme to the core.
 
@@ -337,21 +367,20 @@ class OperationalState:
         OperationalState
          The state after the mobilization
         """
-        new_core = self.new_core()
-        new_history = deepcopy(self.history)
-        new_history.append(scheme)
-        apply_mobilization(new_core, scheme)
-        return self.copy(core=new_core, history=new_history)
+        new_core = self.core
+        scheme.apply(new_core)
+        return self.copy(core=new_core, history=self.history.new_cycle(scheme))
 
-    def burnup(self, *,
+    def burnup(self: Self, *,
                mixtures: dict[PurePath, Mixture],
-               time: timedelta) -> "OperationalState":
+               time: timedelta) -> Self:
         """Perform a density update after a burnup step.
 
         Parameters
         ----------
         mixtures: dict[str, Mixture]
-            Dict of the new mixtures for each updated node, given by the path of the node.
+            Dict of the new mixtures for each updated node, given by the path 
+            of the node.
         time: timedelta
             The duration of the burnup step
 
@@ -360,19 +389,27 @@ class OperationalState:
         OperationalState
             The updated state.
         """
-        new_core = self.new_core()
-        new_history = deepcopy(self.history)
-        new_history.append(time)
+        new_core = self.core
         for path, mixture in mixtures.items():
             new_core[path].mixture = mixture
-        return self.copy(history=new_history, core=new_core)
+        return self.copy(history=self.history.timestep(self.params, time), 
+                         core=new_core)
 
     @property
     def amounts(self) -> dict[Isotope, kg]:
-        return parse_amounts(self.core)
+        """Return the total mass of each isotope in the state's core."""
+        return parse_amounts(self._core)
 
     def __repr__(self) -> str:
-        return f'Design: {self.design_name}, History={self.history}'
+        return f"Tags: {self.tags}, History={self.history}" 
 
     def __hash__(self) -> int:
-        return hash((self.design_name, self.history, self.release))
+        return hash((self._core, self.params, self.history))
+
+    def __eq__(self: Self, other: Self) -> bool:
+        if not isinstance(other, type(self)):
+            return NotImplemented
+        if (self.history != other.history) or (self.params != other.params):
+            return False
+        return self._core == other._core
+

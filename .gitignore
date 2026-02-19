@@ -5,3 +5,4 @@ docs/build
 docs/source/_static
 *.egg-info
 __pycache__
+.pytest_cache

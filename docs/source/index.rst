@@ -6,22 +6,6 @@
 Welcome to CoreOperator's documentation!
 ========================================
 
-
-Installation
-------------
-To install, install the external dependencies under ``requirements.yml`` first, probably with something like::
-
-   mamba env update -f requirements.yml
-
-Then, use::
-
-   pip install -r packages.txt
-
-Finally, use pip for this package directly::
-
-   pip install .
-
-
 .. toctree::
    :maxdepth: 2
 

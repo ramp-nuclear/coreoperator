@@ -1,2 +1,3 @@
 git+ssh://git@gitlabsrv/kurim/ramp/isotopes.git@dev#egg=isotopes
 git+ssh://git@gitlabsrv/kurim/ramp/coremaker.git@wip#egg=coremaker
+don't forget ramp_core
