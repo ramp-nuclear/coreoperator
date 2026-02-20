@@ -39,13 +39,13 @@ factories = st.sampled_from(_factories)
 
 @given(_sites=repeat_lists, factory=factories)
 def test_raises_correctly_if_sites_repeat_in_chains(_sites, factory):
-    with pytest.raises(IllegalActionError, match="more than once")
+    with pytest.raises(IllegalActionError, match="more than once"):
         factory(_sites)
 
 
 @given(factories)
 def test_action_on_no_sites_raises_correctly(factory):
-    with pytest.raises(IllegalActionError, match="with no sites")
+    with pytest.raises(IllegalActionError, match="with no sites"):
         factory([])
 
 
@@ -130,9 +130,9 @@ def test_apply_cyclic_shuffle_on_example_core():
     cyclic_chain = CyclicShuffle(list(zip(core_sites, transforms)))
     state = _label_state(example_state)
     scheme = Scheme(actions=(cyclic_chain,))
-    state = example_state.new_after_scheme(scheme)
+    state = state.new_after_scheme(scheme)
     shifted_sites = [state._core.grid[site].label for site in core_sites]
     assert isinstance(state, OperationalState)
     assert set(state._core.grid.keys()) == set(state._core.grid.sites())
-    assert shifted_sites[1:] = shifted_sited[:1] == list(core_sites)
+    assert shifted_sites[1:] + shifted_sites[:1] == list(core_sites)
 

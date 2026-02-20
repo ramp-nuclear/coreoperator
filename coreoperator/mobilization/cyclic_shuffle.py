@@ -31,7 +31,7 @@ class CyclicShuffle(GridAction):
     def __eq__(self, other):
         if not isinstance(other, type(self)):
             return NotImplemented
-        return self._movement == other._movement)
+        return self._movement == other._movement
 
     def __hash__(self):
         return hash(self._movement)

@@ -28,7 +28,7 @@ def test_new_water_density_factor():
     # arbitrarily chosen
     factor = 0.7
     new_state = example_state.new_water_density_factor(factor)
-    new_densities_df = _get_densities_df(new_state, _mostly_water)
+    new_densities_df = _get_densities_df(new_state, filt=_mostly_water)
     assert new_densities_df.div(densities_df).eq(factor).all().all()
 
 

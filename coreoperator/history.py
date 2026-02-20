@@ -44,7 +44,7 @@ class StateParams(Serializable):
         return type(self)(**kw)
 
     def __getitem__(self, item: str):
-        return self.power if key == "power" else self._attrs[item]
+        return self.power if item == "power" else self._attrs[item]
 
     def __delitem__(self, key: str):
         if key == "power":

@@ -157,7 +157,7 @@ def get_transformed_rods(sites: Sequence[tuple[Site, Transform]],
 
     """
     rods = [rods_at_sites[site] for site, _ in sites]
-    for (_, transform) in zip(sites, rods):
+    for (_, transform), rod in zip(sites, rods):
         rod.transform(None, transform)
     return rods
 

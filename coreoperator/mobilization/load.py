@@ -11,7 +11,7 @@ from coremaker.protocols.core import Site
 from coremaker.protocols.element import Element
 from coremaker.transform import Transform, identity
 from more_itertools import first
-from ramp_serializable import deserialize_default, Serializable
+from ramp_core.serializable import deserialize_default, Serializable
 
 from coreoperator.mobilization.grid_action import (
         _ensure_unique, Position, DefinitePosition, GridAction, SiteDict,

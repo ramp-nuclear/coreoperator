@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from itertools import chain
-from typing import ClassBar, Any, Type, TypeVar
+from typing import ClassVar, Any, Type, TypeVar
 try:
     from typing import Self
 except ImportError:

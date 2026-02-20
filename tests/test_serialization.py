@@ -41,14 +41,14 @@ transforms = st.sampled_from([identity, rotate90, rotate180, rotate270])
 positions = st.tuples(sites, transforms)
 position_lists = st.lists(st.one_of(sites, positions), min_size=1, max_size=10,
                           unique_by=lambda x: x[0] if isinstance(x, tuple) else x)
-factories = st.integers(min_value=0, max_value=100).map(lambda x: lambda _MockSer(x))
+factories = st.integers(min_value=0, max_value=100).map(lambda x: lambda: _MockSer(x))
 
 removals = st.builds(Remove, sites=site_lists)
 shuffles = st.builds(CyclicShuffle, sites=position_lists.filter(lambda x: len(x) > 1))
 load_singles = st.builds(LoadSite, factory=factories, site=sites, transform=transforms)
 loadchains = st.builds(LoadChain, factory=factories, sites=position_lists)
 inplaces = st.builds(TransformInPlace, sites=position_lists)
-actions = st.one_onf(removals, shuffles, loadchains, load_singles)
+actions = st.one_of(removals, shuffles, loadchains, load_singles)
 action_lists = st.lists(actions, min_size=1, max_size=8)
 schemes = st.builds(Scheme, actions=action_lists.map(tuple))
 
@@ -57,7 +57,7 @@ par_dicts = st.dictionaries(keys=st.text(alphabet=ascii_lowercase, min_size=1, m
                             values=powers,
                             min_size=0, max_size=10)
 _datums = st.tuples(powers, par_dicts)
-state_pars = datums.map(lambda x: StateParams(x[0], **x[1]))
+state_pars = _datums.map(lambda x: StateParams(x[0], **x[1]))
 periods = st.builds(OperationalPeriod, 
                     params=state_pars,
                     time=st.timedeltas(min_value=timedelta(seconds=1), max_value=timedelta(days=31))
@@ -65,7 +65,7 @@ periods = st.builds(OperationalPeriod,
 histories = st.lists(st.one_of(periods, schemes), min_size=0, max_size=10).map(History)
 
 states = st.builds(OperationalState,
-                   params=state_params,
+                   params=state_pars,
                    history=histories,
                    tags=st.sets(st.text(alphabet=ascii_lowercase, min_size=1), min_size=0, max_size=4),
                    core=st.just(_null_core)
@@ -75,7 +75,7 @@ compressions = st.sampled_from(range(-1, 10))
 feathers = st.tuples(states, compressions).map(lambda x: FeatherState.from_state(x[0], compression_level=x[1]))
 
 
-strategies = {
+strats = {
         StateParams: state_pars,
         OperationalPeriod: periods,
         LoadSite: load_singles,

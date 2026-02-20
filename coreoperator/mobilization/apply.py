@@ -6,7 +6,6 @@ from coremaker.protocols.core import Core, Site
 from coremaker.protocols.element import Element
 from coremaker.transform import Transform
 from more_itertools import first
-from multipledispatch import dispatch
 
 from coreoperator.mobilization import CyclicShuffle, GridAction, Remove, \
     LoadChain, Scheme
@@ -54,43 +53,3 @@ def get_transformed_rods(sites: Sequence[tuple[Site, Transform]],
         rod.transform(None, transform)
     return rods
 
-
-@dispatch(object, object)
-def apply_grid_action(d: SiteDict, action: GridAction):
-    raise NotImplementedError(
-        f'{apply_grid_action.__name__} is not implemented for {type(action)}.')
-
-
-@dispatch(object, CyclicShuffle)
-def apply_grid_action(d: SiteDict, shuffle: CyclicShuffle):
-    sites = rotate_left(shuffle.sites)
-    rods = get_transformed_rods(sites, d)
-    news = dict(zip(map(itemgetter(0), sites), rods))
-    _set_rods(d, news)
-
-
-@dispatch(object, TransformInPlace)
-def apply_grid_action(d: SiteDict, action: TransformInPlace):
-    rods = get_transformed_rods(action.sites, d)
-    news = dict(zip(map(itemgetter(0), action.sites), rods))
-    _set_rods(d, news)
-
-
-@dispatch(object, LoadChain)
-def apply_grid_action(d: SiteDict, loadchain: LoadChain):
-    sites: Iterable[Site] = list(map(itemgetter(0), loadchain.sites))
-    transforms: Iterable[Transform] = list(map(itemgetter(1), loadchain.sites))
-    new_rod = loadchain.factory()
-    new_rod.transform(None, first(transforms))
-    rods = get_transformed_rods(list(zip(sites[:-1], transforms[1:])), d)
-    _set_rods(d, dict(zip(sites, chain((new_rod,), rods))))
-
-
-@dispatch(object, Remove)
-def apply_grid_action(d: SiteDict, remove: Remove):
-    _set_rods(d, {site: None for site in remove.sites})
-
-
-def apply_mobilization(core: Core, mobilization: Scheme):
-    for action in mobilization.actions:
-        apply_grid_action(core.grid, action)

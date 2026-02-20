@@ -30,5 +30,5 @@ def test_history_is_joined_if_two_schemes_are_applies():
     origin = History([s1])
     new = origin.new_cycle(s2)
     assert len(origin) == len(new) == 1
-    assert new_steps[-1] == s
+    assert new.steps[-1] == s
 
