@@ -1,4 +1,8 @@
 from typing import Sequence, TypeVar
+try:
+    from typing import Self
+except ImportError:
+    Self = TypeVar("Self")
 
 from coremaker.core import Site
 
