@@ -1,7 +1,7 @@
 from coremaker.example import example_core
 
+from coreoperator.history import History, StateParams
 from coreoperator.operational_state import OperationalState
-from coreoperator.history import StateParams, History
 
 blank_hist = History()
 example_state = OperationalState(history=blank_hist,

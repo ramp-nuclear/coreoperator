@@ -26,7 +26,10 @@ classifiers = [
 ]
 dependencies = [
     "more-itertools",
-    "numpy"
+    "numpy",
+    "ramp-coremaker",
+    "ramp-core",
+    "ramp-isotopes",
 ]
 
 [project.optional-dependencies]

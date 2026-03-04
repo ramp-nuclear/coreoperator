@@ -1,4 +1,5 @@
 """Tests for the FeatherState subclass"""
+
 import hypothesis.strategies as st
 from coremaker.example import hafnium_block_aliases
 from hypothesis import given
@@ -19,7 +20,7 @@ def test_new_control_height_returns_a_similar_featherstate_for_one_height_and_on
     hup = example_state.new_control_height(alias=alias, height=13)
     fhup = fstate.new_control_height(alias=alias, height=13)
     assert hup == fhup
-    assert type(fhup) == FeatherState
+    assert type(fhup) is FeatherState
 
 
 def test_new_temperature_returns_a_similar_featherstate_for_one_temperature():
@@ -27,5 +28,4 @@ def test_new_temperature_returns_a_similar_featherstate_for_one_temperature():
     hup = example_state.new_temperature(37)
     fhup = fstate.new_temperature(37)
     assert hup == fhup
-    assert type(fhup) == FeatherState
-
+    assert type(fhup) is FeatherState

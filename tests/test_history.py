@@ -1,7 +1,7 @@
 from datetime import timedelta
 
-from coreoperator.history import OperationalPeriod, StateParams, History
-from coreoperator.mobilization import Scheme, CyclicShuffle
+from coreoperator.history import History, OperationalPeriod, StateParams
+from coreoperator.mobilization import CyclicShuffle, Scheme
 
 
 def test_history_changes_dont_affect_original():

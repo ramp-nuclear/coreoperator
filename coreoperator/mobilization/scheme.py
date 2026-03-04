@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from itertools import chain
-from typing import ClassVar, Any, Type, TypeVar
+from typing import Any, ClassVar, Type, TypeVar
+
 try:
     from typing import Self
 except ImportError:
@@ -8,7 +9,6 @@ except ImportError:
 
 from coremaker.protocols.core import Core
 from ramp_core.serializable import Serializable, deserialize_default
-
 
 from coreoperator.mobilization.grid_action import GridAction
 

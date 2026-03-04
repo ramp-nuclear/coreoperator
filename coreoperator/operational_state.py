@@ -1,7 +1,8 @@
 from copy import deepcopy
 from datetime import timedelta
 from pathlib import PurePath
-from typing import Optional, Callable, TypeVar, Any, Type
+from typing import Any, Callable, Optional, Type, TypeVar
+
 try:
     from typing import Self
 except ImportError:
@@ -15,7 +16,7 @@ from coremaker.protocols.core import Core
 from coremaker.protocols.mixture import Mixture
 from coremaker.protocols.node import NodeLike
 from coremaker.transform import Transform
-from isotopes import Isotope, H, O, ZAID
+from isotopes import ZAID, H, Isotope, O
 from ramp_core.serializable import Serializable, deserialize_default
 
 from coreoperator.history import History, StateParams

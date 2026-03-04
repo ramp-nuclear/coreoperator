@@ -7,17 +7,22 @@ from string import ascii_lowercase
 import hypothesis.strategies as st
 from coremaker.core import Core
 from coremaker.grids import NullGrid
-from coremaker.transform import rotate180, rotate90, rotate270, identity
+from coremaker.transform import identity, rotate90, rotate180, rotate270
 from coremaker.tree import Tree
 from hypothesis import given, settings
-from ramp_core import RampJSONEncoder, RampJSONDecoder
+from ramp_core import RampJSONDecoder, RampJSONEncoder
 
 from coreoperator import jsonable
 from coreoperator.featherstate import FeatherState
 from coreoperator.history import History, OperationalPeriod, StateParams
 from coreoperator.mobilization import (
-        Scheme, LoadChain, LoadSite, CyclicShuffle, Remove, TransformInPlace,
-        )
+    CyclicShuffle,
+    LoadChain,
+    LoadSite,
+    Remove,
+    Scheme,
+    TransformInPlace,
+)
 from coreoperator.operational_state import OperationalState
 
 _null_core = Core(grid=NullGrid(), aliases={}, tree=Tree(), outer_geometry=None)

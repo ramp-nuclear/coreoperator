@@ -1,4 +1,5 @@
 from typing import Sequence, TypeVar
+
 try:
     from typing import Self
 except ImportError:
@@ -6,9 +7,7 @@ except ImportError:
 
 from coremaker.core import Site
 
-from coreoperator.mobilization.grid_action import (
-        _ensure_unique, GridAction, SiteDict, set_rods
-        )
+from coreoperator.mobilization.grid_action import GridAction, SiteDict, _ensure_unique, set_rods
 
 
 class Remove(GridAction):

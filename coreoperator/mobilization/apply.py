@@ -1,16 +1,8 @@
-from itertools import chain
-from operator import itemgetter
-from typing import Hashable, Iterable, Sequence, MutableMapping
+from typing import Hashable, MutableMapping, Sequence
 
-from coremaker.protocols.core import Core, Site
+from coremaker.protocols.core import Site
 from coremaker.protocols.element import Element
 from coremaker.transform import Transform
-from more_itertools import first
-
-from coreoperator.mobilization import CyclicShuffle, GridAction, Remove, \
-    LoadChain, Scheme
-from coreoperator.mobilization.grid_action import rotate_left
-from coreoperator.mobilization.transform_inplace import TransformInPlace
 
 Alias = Hashable
 SCRAM = Element
