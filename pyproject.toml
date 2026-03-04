@@ -10,6 +10,7 @@ authors = [
 description = "Package for applying operations on cores from coremaker"
 dynamic = ["version"]
 requires-python = ">=3.11"
+readme = "README.md"
 license = {file = "LICENSE"}
 classifiers = [
     "Development Status :: 4 - Beta",
