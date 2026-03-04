@@ -15,8 +15,8 @@ from more_itertools import first
 
 from coreoperator import OperationalState
 from coreoperator.example import example_state
-from coreoperator.mobilization import CyclicShuffle, LoadChain, Scheme, Remove
-from coreoperator.mobilization.grid_action import rotate_left, IllegalActionError
+from coreoperator.mobilization import CyclicShuffle, LoadChain, Remove, Scheme
+from coreoperator.mobilization.grid_action import IllegalActionError, rotate_left
 from coreoperator.mobilization.transform_inplace import TransformInPlace
 
 Position = tuple[str, str]

@@ -1,7 +1,8 @@
 from copy import deepcopy
 from itertools import chain
 from operator import itemgetter
-from typing import Callable, Sequence, Iterable, Any, Type, TypeVar
+from typing import Any, Callable, Iterable, Sequence, Type, TypeVar
+
 try:
     from typing import Self
 except ImportError:
@@ -11,12 +12,19 @@ from coremaker.protocols.core import Site
 from coremaker.protocols.element import Element
 from coremaker.transform import Transform, identity
 from more_itertools import first
-from ramp_core.serializable import deserialize_default, Serializable
+from ramp_core.serializable import Serializable, deserialize_default
 
 from coreoperator.mobilization.grid_action import (
-        _ensure_unique, Position, DefinitePosition, GridAction, SiteDict,
-        set_rods, get_transformed_rods, ser_sites, deser_sites
-        )
+    DefinitePosition,
+    GridAction,
+    Position,
+    SiteDict,
+    _ensure_unique,
+    deser_sites,
+    get_transformed_rods,
+    ser_sites,
+    set_rods,
+)
 
 RodFactory = Callable[[], Element]
 

@@ -5,9 +5,16 @@ from coremaker.protocols.core import Site
 from coremaker.transform import identity
 
 from coreoperator.mobilization.grid_action import (
-        _ensure_unique, Position, DefinitePosition, rotate_left, rotate_right, 
-        GridAction, SiteDict, set_rods, get_transformed_rods,
-        )
+    DefinitePosition,
+    GridAction,
+    Position,
+    SiteDict,
+    _ensure_unique,
+    get_transformed_rods,
+    rotate_left,
+    rotate_right,
+    set_rods,
+)
 
 
 class CyclicShuffle(GridAction):

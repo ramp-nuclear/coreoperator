@@ -1,12 +1,12 @@
 from functools import partial
 from pathlib import PurePath
-from typing import Callable, Any
+from typing import Any, Callable
 
 import pandas as pd
 from coremaker.protocols.node import NodeLike
 
 from coreoperator.example import example_state
-from coreoperator.operational_state import _mostly_water, OperationalState
+from coreoperator.operational_state import OperationalState, _mostly_water
 
 
 def _make_df(state: OperationalState,

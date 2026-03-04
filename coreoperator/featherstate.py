@@ -1,12 +1,14 @@
 import pickle
 import zlib
-from typing import Type, TypeVar, Literal, Any
+from typing import Any, Literal, Type, TypeVar
+
 try:
     from typing import Self
 except ImportError:
     Self = TypeVar("Self")
 
 from coremaker.core import Core
+
 from .operational_state import OperationalState
 
 Zlib_Compression = Literal[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9]

@@ -5,9 +5,14 @@ from coremaker.protocols.core import Site
 from coremaker.transform import identity
 
 from coreoperator.mobilization.grid_action import (
-        Position, _ensure_unique, DefinitePosition, GridAction, SiteDict, 
-        set_rods, get_transformed_rods
-        )
+    DefinitePosition,
+    GridAction,
+    Position,
+    SiteDict,
+    _ensure_unique,
+    get_transformed_rods,
+    set_rods,
+)
 
 
 class TransformInPlace(GridAction):

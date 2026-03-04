@@ -1,9 +1,8 @@
-from typing import Hashable, Sequence, MutableMapping
+from typing import Hashable, MutableMapping, Sequence
 
 from coremaker.protocols.core import Site
 from coremaker.protocols.element import Element
 from coremaker.transform import Transform
-
 
 Alias = Hashable
 SCRAM = Element

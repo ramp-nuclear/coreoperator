@@ -1,6 +1,6 @@
 from collections import Counter
-from itertools import islice, cycle
-from typing import Sequence, Protocol, Iterable, TypeVar, Mapping, Hashable, Any, Type
+from itertools import cycle, islice
+from typing import Any, Hashable, Iterable, Mapping, Protocol, Sequence, Type, TypeVar
 
 try:
     from typing import Self
