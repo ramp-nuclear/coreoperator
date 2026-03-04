@@ -1,3 +1,6 @@
 dependencies:
   - more-itertools
   - numpy
+  - ramp-coremaker
+  - ramp-core
+  - ramp-isotopes
