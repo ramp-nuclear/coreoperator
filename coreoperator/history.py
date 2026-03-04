@@ -1,7 +1,7 @@
 from dataclasses import dataclass, replace, field
 from datetime import timedelta
 from itertools import takewhile
-from typing import Sequence, Hashable, Any, Generator, Type, TypeVar, ClassVar
+from typing import Hashable, Any, Generator, Type, TypeVar, ClassVar
 try:
     from typing import Self
 except ImportError:

@@ -39,5 +39,5 @@ class TransformInPlace(GridAction):
         return hash(tuple(self.sites))
 
     def __repr__(self) -> str:
-        return (f"Rotation:"
+        return ("Rotation:"
                 + ','.join(map(lambda x: f"{x[0]} transformed by {x[1]}", self.sites)))

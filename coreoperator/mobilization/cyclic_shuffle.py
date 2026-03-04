@@ -1,5 +1,5 @@
 from operator import itemgetter
-from typing import Sequence, TypeVar
+from typing import Sequence
 
 from coremaker.protocols.core import Site
 from coremaker.transform import identity

@@ -10,7 +10,7 @@ import hypothesis.strategies as st
 import numpy as np
 import pytest
 from coremaker.transform import Transform
-from hypothesis import given, settings
+from hypothesis import given
 from more_itertools import first
 
 from coreoperator import OperationalState

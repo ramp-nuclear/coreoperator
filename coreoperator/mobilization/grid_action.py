@@ -1,6 +1,7 @@
 from collections import Counter
 from itertools import islice, cycle
 from typing import Sequence, Protocol, Iterable, TypeVar, Mapping, Hashable, Any, Type
+
 try:
     from typing import Self
 except ImportError:
@@ -17,18 +18,13 @@ T = TypeVar("T")
 
 
 class SiteDict(Protocol):
-    """Partial requirements from a mutable mapping of Site -> Element
+    """Partial requirements from a mutable mapping of Site -> Element"""
 
-    """
+    def __getitem__(self, item: Site) -> Element: ...
 
-    def __getitem__(self, item: Site) -> Element:
-        ...
+    def __setitem__(self, key: Site, value: Element) -> None: ...
 
-    def __setitem__(self, key: Site, value: Element) -> None:
-        ...
-
-    def __delitem__(self, key: Site) -> None:
-        ...
+    def __delitem__(self, key: Site) -> None: ...
 
 
 class IllegalActionError(ValueError):
@@ -42,7 +38,9 @@ def _ensure_unique(positions: Sequence[Position]):
     counter = Counter(sites)
     if set(counter.values()) != {1}:
         repeats = {site for site, v in counter.items() if v > 1}
-        raise IllegalActionError(f"Some sites appear more than once in an action: {repeats}")
+        raise IllegalActionError(
+            f"Some sites appear more than once in an action: {repeats}"
+        )
 
 
 class GridAction(Hashable, Serializable, Protocol):
@@ -107,7 +105,6 @@ def rotate_right(it: Iterable[T], n: int = 1) -> tuple[T, ...]:
 
     """
     seq = tuple(it)
-    pos0 = (-1 * n) % len(seq)
     return rotate_left(it, n=(-n) % len(seq))
 
 
@@ -126,7 +123,7 @@ def set_rods(coresites: SiteDict, new_sites: Mapping[Site, Element | None]) -> N
     Raises
     ------
     IllegalActionError
-        Raises if a site in new_sites points to None but that site isn't occupied 
+        Raises if a site in new_sites points to None but that site isn't occupied
         in the original mapping.
 
     """
@@ -136,11 +133,14 @@ def set_rods(coresites: SiteDict, new_sites: Mapping[Site, Element | None]) -> N
         elif site in coresites:
             del coresites[site]
         else:
-            raise IllegalActionError(f"Can't remove the contents of the unoccupied site: {site}")
+            raise IllegalActionError(
+                f"Can't remove the contents of the unoccupied site: {site}"
+            )
 
 
-def get_transformed_rods(sites: Sequence[tuple[Site, Transform]],
-                         rods_at_sites: SiteDict) -> Sequence[Element]:
+def get_transformed_rods(
+    sites: Sequence[tuple[Site, Transform]], rods_at_sites: SiteDict
+) -> Sequence[Element]:
     """Function that returns the transformed rods at the given sites under the given transformation.
 
     Parameters
@@ -175,8 +175,10 @@ def ser_sites(sites: Iterable[Position]) -> list:
     Serialized form of the sites
 
     """
-    return [[ptup[0], ptup[1].serialize()] if isinstance(ptup, tuple) else ptup
-             for ptup in sites]
+    return [
+        [ptup[0], ptup[1].serialize()] if isinstance(ptup, tuple) else ptup
+        for ptup in sites
+    ]
 
 
 def deser_sites(slist: list[tuple[str, dict]]) -> list[Position]:
@@ -193,6 +195,7 @@ def deser_sites(slist: list[tuple[str, dict]]) -> list[Position]:
         The list of positions we started with.
 
     """
-    return [(ptup[0], Transform.deserialize(ptup[1])) if isinstance(ptup, list) else ptup
-            for ptup in slist]
-
+    return [
+        (ptup[0], Transform.deserialize(ptup[1])) if isinstance(ptup, list) else ptup
+        for ptup in slist
+    ]
