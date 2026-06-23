@@ -213,7 +213,7 @@ class History(Serializable):
     def cycle_burnup(self) -> MWD:
         """The amount of burnup since the start of this cycle"""
         cycle = takewhile(lambda x: isinstance(x, OperationalPeriod), self.steps[::-1])
-        return sum((self.burnup for step in cycle))
+        return sum((step.burnup for step in cycle))
 
     @property
     def cycle_time(self) -> timedelta:
